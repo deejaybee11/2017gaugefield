@@ -1,0 +1,37 @@
+#compiled object files
+*.slo
+*.lo
+*.o
+*.obj
+
+#precompiled headers
+*.gch
+*.pch
+
+#compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+#fortran modules
+*.mod
+
+#compiled static libraries
+*.lai
+*.la
+*.a
+*.app
+
+#executables
+*.exe
+*.out
+*.app
+
+#optimisation reports
+*.optrpt
+
+#backups
+*.cpp~
+*.hpp~
+*.h~
+*.swp
