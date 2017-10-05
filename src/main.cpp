@@ -30,6 +30,7 @@
 #include "../include/SimulationData.hpp"
 #include "../include/WaveFunction.hpp"
 #include "../include/PotentialData.hpp"
+#include "../include/Solve.hpp"
 
 #if !defined(MKL_ILP64)
 	#define LI "%li"
@@ -49,6 +50,9 @@ int main() {
 	SimulationData sim_data(128, 128);
 	PotentialData pot_data(sim_data);
 	WaveFunction psi(sim_data, pot_data.harmonic_trap);
+
+	//Find the ground state
+	calculate_ground_state(sim_data, psi, pot_data);
 
 	return 0;
 

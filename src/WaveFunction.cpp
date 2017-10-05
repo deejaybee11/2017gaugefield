@@ -27,11 +27,19 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <sys/stat.h>
 
 #include "../include/SimulationData.hpp"
 #include "../include/PotentialData.hpp"
+#include "../include/SaveData.hpp"
 
 WaveFunction::WaveFunction(SimulationData &sim_data, double *harmonic_trap) {
+
+	struct stat sb;
+	if (stat("InitialState.fit", &sb) == 0) {
+		system("rm InitialState.fit");
+		std::cout << "InitialState.fit deleted" << std::endl;
+	}
 
 	this->psi = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
 	this->psi_conj = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
@@ -53,6 +61,9 @@ WaveFunction::WaveFunction(SimulationData &sim_data, double *harmonic_trap) {
 			}
 		}
 	}
+	calc_abs(sim_data);
+	save_fits_potential(sim_data, this->abs_psi, "InitialState.fit");
+
 }	
 
 void WaveFunction::calc_abs(SimulationData &sim_data) {
@@ -69,13 +80,15 @@ void WaveFunction::calc_norm(SimulationData &sim_data) {
 	double temp_real = 0;
 	double temp_imag = 0;
 	double norm_fac = 0;
-
+	
+	#pragma omp parallel for reduction(+:psi_sum)
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		psi_sum += this->abs_psi[i];
 	}
 
 	norm_fac = sqrt(1.0 / (psi_sum * sim_data.dx * sim_data.dy));
-
+	std::cout << norm_fac << std::endl;
+	#pragma omp parallel for private(temp_real, temp_imag)
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		temp_real = this->psi[i].real * norm_fac;
 		temp_imag = this->psi[i].imag * norm_fac;

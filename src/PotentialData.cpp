@@ -59,6 +59,8 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 			this->kinetic_energy[index] = kin_energy_val;
 		}
 	} 
+	save_fits_potential(sim_data, this->harmonic_trap, "HarmonicTrap.fit");
+	save_fits_potential(sim_data, this->kinetic_energy, "KineticEnergy.fit");
 
 }
 
@@ -112,7 +114,7 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 void PotentialData::calculate_non_linear_energy(SimulationData &sim_data, WaveFunction &psi) {
 
 	double nonlinearval = 0;
-	psi.calc_abs();
+	psi.calc_abs(sim_data);
 	#pragma omp parallel for private(nonlinearval)
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		nonlinearval = sim_data.beta * psi.abs_psi[i];
