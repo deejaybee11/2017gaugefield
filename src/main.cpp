@@ -31,6 +31,7 @@
 #include "../include/WaveFunction.hpp"
 #include "../include/PotentialData.hpp"
 #include "../include/Solve.hpp"
+#include "../include/Diagonalize.hpp"
 
 #if !defined(MKL_ILP64)
 	#define LI "%li"
@@ -53,7 +54,8 @@ int main() {
 
 	//Find the ground state
 	calculate_ground_state(sim_data, psi, pot_data);
-
+	diagonalize_hamiltonian(sim_data, psi, pot_data);
+	calculate_time_evolution(sim_data, psi, pot_data);
 	return 0;
 
 }

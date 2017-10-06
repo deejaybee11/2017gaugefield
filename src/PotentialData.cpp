@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #define _USE_MATH_DEFINES
 #include <math.h>
 //MKL includes
@@ -41,8 +42,8 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 	this->harmonic_trap = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->non_linear = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->kinetic_energy = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
-	this->pos_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
-	this->mom_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
+	this->pos_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
+	this->mom_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
 
 	//Fill arrays
 	double harmonic_val = 0;
@@ -52,15 +53,13 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 	for (int i = 0; i < sim_data.get_num_x(); ++i) {
 		for (int j = 0; j < sim_data.get_num_y(); ++j) {
 			index = i * sim_data.get_num_y() + j;
-			harmonic_val = 0.5 * (pow(sim_data.gamma_x, 2.0) * pow(sim_data.x[i], 2.0) + pow(sim_data.gamma_y, 2.0) + pow(sim_data.gamma_y, 2.0) * pow(sim_data.y[j], 2.0));
+			harmonic_val = 0.5 * (pow(sim_data.gamma_x, 2.0) * pow(sim_data.x[i], 2.0) + pow(sim_data.gamma_y, 2.0) * pow(sim_data.y[j], 2.0));
 			kin_energy_val = 0.5 * (pow(sim_data.px[i], 2.0) + pow(sim_data.py[j], 2.0));
 			
 			this->harmonic_trap[index] = harmonic_val;
 			this->kinetic_energy[index] = kin_energy_val;
 		}
 	} 
-	save_fits_potential(sim_data, this->harmonic_trap, "HarmonicTrap.fit");
-	save_fits_potential(sim_data, this->kinetic_energy, "KineticEnergy.fit");
 
 }
 
@@ -83,9 +82,12 @@ void PotentialData::assign_position_operator(SimulationData &sim_data, WaveFunct
 		#pragma omp parallel for private(theta)
 		for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 			theta = (this->non_linear[i] + harm * this->harmonic_trap[i]) * 0.5 * sim_data.dt;
+			//std::cout << std::setprecision(16) << "theta=" << theta << " dt=" << sim_data.dt <<  std::endl;
 			this->pos_operator[i].real = exp(-1.0 * theta);
 			this->pos_operator[i].imag = 0;
 		}
+//	std::cout << pos_operator[1562].real << " " << pos_operator[1562].imag << std::endl;
+	
 	}
 }
 
@@ -108,6 +110,8 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 			this->mom_operator[i].real = exp(-1.0 * theta);
 			this->mom_operator[i].imag = 0;
 		}
+//	std::cout << mom_operator[1562].real << " " << mom_operator[1562].imag << std::endl;
+
 	}
 }
 

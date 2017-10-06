@@ -46,12 +46,16 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	this->length_x = 30;
 	this->length_y = 30;
 	//Number of steps
-	this->num_r_steps = 100000;
-	this->num_i_steps = 5;
+	this->num_r_steps = 10000;
+	this->num_i_steps = 100000;
 	this->gamma_x = 1;
 	this->gamma_y = 1.4;
-	this->beta = 1;
-	double dt = 0.01;
+	this->beta = 10;
+	this->count = 0;
+	//Gauge potential parameters
+	omega_r = 1;
+	detuning_gradient = 1;
+	recoil_k = 1;
 	//Memory allocation time
 	this->x = (double*)mkl_malloc(this->num_x * sizeof(double), 64);
 	this->y = (double*)mkl_malloc(this->num_y * sizeof(double), 64);
@@ -76,6 +80,9 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	}
 	this->dx = this->x[2]-this->x[1];
 	this->dy = this->y[2]-this->y[1];
+	this->dt = 0.001 * this->dx;
+	std::cout << "dx = " << this->dx << std::endl;
+	std::cout << "dt = " << this->dt << std::endl;
 	//Perform FFT shift on momentum arrays to compensate for negative frequencies shifting
 	double temp;
 	int n[2];

@@ -56,13 +56,20 @@ void save_fits_potential(SimulationData &sim_data, double *potential, const char
 
 	fitsfile *fptr;
 	int status = 0;
+	double *save_data = 0;
+	save_data = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	long fpixel = 1, naxis = 2, nelements;
 	long naxes[2] = {sim_data.get_num_y(), sim_data.get_num_x()};
+	#pragma omp parallel for
+	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
+		save_data[i] = potential[i];
+	}
 	fits_create_file(&fptr, fits_file_name, &status);
 	fits_create_img(fptr, DOUBLE_IMG, naxis, naxes, &status);
 	nelements = naxes[0]*naxes[1];
-	fits_write_img(fptr, TDOUBLE, fpixel, nelements, potential, &status);
+	fits_write_img(fptr, TDOUBLE, fpixel, nelements, save_data, &status);
 	fits_close_file(fptr, &status);
 	fits_report_error(stderr, status);
 
+	mkl_free(save_data);
 }

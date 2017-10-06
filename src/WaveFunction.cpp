@@ -59,6 +59,7 @@ WaveFunction::WaveFunction(SimulationData &sim_data, double *harmonic_trap) {
 				this->psi[index].real = 0;
 				this->psi[index].imag = 0;
 			}
+			this->abs_psi[index] = 0;
 		}
 	}
 	calc_abs(sim_data);
@@ -87,13 +88,12 @@ void WaveFunction::calc_norm(SimulationData &sim_data) {
 	}
 
 	norm_fac = sqrt(1.0 / (psi_sum * sim_data.dx * sim_data.dy));
-	std::cout << norm_fac << std::endl;
 	#pragma omp parallel for private(temp_real, temp_imag)
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		temp_real = this->psi[i].real * norm_fac;
 		temp_imag = this->psi[i].imag * norm_fac;
 		this->psi[i].real = temp_real;
-		this->psi[i].real = temp_imag;
+		this->psi[i].imag = temp_imag;
 	}
 }
 

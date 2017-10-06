@@ -46,6 +46,8 @@ public:
 	struct tm *mytime;
 	char folder[80];
 	char command[80];
+	int count;
+	int max_count = 200;
 	//Position and Momentum
 	double *x;
 	double *y;
@@ -67,7 +69,7 @@ public:
 	double *chemical_potential;
 	//Gauge potential parameters
 	double omega_r;
-	double detuning;
+	double detuning_gradient;
 	double recoil_k;
 	//Simulation parameters
 	int num_r_steps;
