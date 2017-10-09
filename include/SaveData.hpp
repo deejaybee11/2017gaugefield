@@ -35,5 +35,7 @@
 
 void save_fits_wavefunction(SimulationData &sim_data, WaveFunction &psi, const char * fits_file_name);
 void save_fits_potential(SimulationData &sim_data, double *pot_data, const char * fits_file_name);
+void save_binary(double *data, const char *filename, int length);
+void save_binary(MKL_Complex16 *data, const char *filename, int length);
 
 #endif    //    _SAVE_DATA_H

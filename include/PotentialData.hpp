@@ -48,8 +48,13 @@ public:
 	double *harmonic_trap;
 	double *non_linear;
 	double *kinetic_energy;
+	//two kinetic energy arrays for the fft stuff
+	double *kinetic_energy_x;
+	double *kinetic_energy_y;
 	MKL_Complex16 *pos_operator;
 	MKL_Complex16 *mom_operator;
+	MKL_Complex16 *mom_operator_x;
+	MKL_Complex16 *mom_operator_y;
 
 	void calculate_non_linear_energy(SimulationData &sim_data, WaveFunction &psi);
 	void assign_position_operator(SimulationData &sim_data, WaveFunction &psi, bool trap_on, bool real_time);

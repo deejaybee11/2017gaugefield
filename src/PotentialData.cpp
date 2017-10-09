@@ -42,8 +42,12 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 	this->harmonic_trap = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->non_linear = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->kinetic_energy = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
+	this->kinetic_energy_x = (double*)mkl_malloc(sim_data.get_num_x() * sizeof(double), 64);
+	this->kinetic_energy_y = (double*)mkl_malloc(sim_data.get_num_x() * sizeof(double), 64);
 	this->pos_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
 	this->mom_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
+	this->mom_operator_x = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
+	this->mom_operator_y = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
 
 	//Fill arrays
 	double harmonic_val = 0;
@@ -58,8 +62,12 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 			
 			this->harmonic_trap[index] = harmonic_val;
 			this->kinetic_energy[index] = kin_energy_val;
+			this->kinetic_energy_x[index] = 0.5 * pow(sim_data.px[i], 2.0);
+			this->kinetic_energy_y[index] = 0.5 * pow(sim_data.py[j], 2.0);
+
 		}
 	} 
+
 
 }
 
@@ -94,13 +102,19 @@ void PotentialData::assign_position_operator(SimulationData &sim_data, WaveFunct
 void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunction &psi, bool real_time) {
 
 	double theta = 0;
+	double theta_x = 0;
+	double theta_y = 0;
 
 	if (real_time) {
-		#pragma omp parallel for private(theta)
+		#pragma omp parallel for private(theta, theta_x, theta_y)
 		for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 			theta = (kinetic_energy[i]) * sim_data.dt;
 			this->mom_operator[i].real = cos(theta);
 			this->mom_operator[i].imag = -1.0 * sin(theta);
+			this->mom_operator_x[i].real = cos(theta_x);
+			this->mom_operator_x[i].imag = -1.0 * sin(theta_x);
+			this->mom_operator_y[i].real = cos(theta_y);
+			this->mom_operator_y[i].imag = -1.0 * sin(theta_y);
 		}
 	}
 	else {
@@ -129,6 +143,11 @@ void PotentialData::calculate_non_linear_energy(SimulationData &sim_data, WaveFu
 PotentialData::~PotentialData() {
 	mkl_free(harmonic_trap);
 	mkl_free(non_linear);
+	mkl_free(kinetic_energy);
+	mkl_free(kinetic_energy_x);
+	mkl_free(kinetic_energy_y);
 	mkl_free(mom_operator);
 	mkl_free(pos_operator);
+	mkl_free(mom_operator_x);
+	mkl_free(mom_operator_y);
 }

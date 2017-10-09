@@ -22,6 +22,7 @@
  */
 
 #include <stdlib.h>
+#include <fstream>
 
 #include "mkl.h"
 
@@ -73,3 +74,17 @@ void save_fits_potential(SimulationData &sim_data, double *potential, const char
 
 	mkl_free(save_data);
 }
+
+
+void save_binary(double *data, const char *filename, int length) {
+	
+	remove(filename);
+	std::ofstream output(filename);
+	output << length << "\n";
+	for (int i = 0; i < length; ++i) {
+		output << data[i] << "\n";
+	}
+	output.close();
+}
+
+

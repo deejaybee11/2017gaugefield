@@ -29,6 +29,10 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <fstream>
+#include <string.h>
+
+#include "../include/SaveData.hpp"
 
 //Constructor
 SimulationData::SimulationData(int num_x, int num_y) {
@@ -98,6 +102,28 @@ SimulationData::SimulationData(int num_x, int num_y) {
 		this->py[i] = this->py[i + n[1]];
 		this->py[i + n[1]] = temp;
 	}
+
+	detuning_ramp_time = 1500;
+	this->detuning_ramp_shape = (double*)mkl_malloc(this->detuning_ramp_time * sizeof(double), 64);
+	double temp_val = 0;
+	double ramp_width = 2.3;
+	double shift = 0.5;
+
+	for (int i = 0; i < this->detuning_ramp_time; ++i) {
+
+		temp_val = 0 + i * 2 * M_PI / ((double)this->detuning_ramp_time - 1.0);
+		if (temp_val < 0.5) {
+
+			this->detuning_ramp_shape[i] = 0;
+		}
+		else {
+//			this->detuning_ramp_shape[i] = 1 - ((0.5 * M_PI) * (ramp_width) / (pow(temp_val - shift, 2.0) + pow(0.5 * ramp_width, 2.0))) / (2 / (M_PI * ramp_width));
+			this->detuning_ramp_shape[i] = 1 - 1 / (pow(temp_val - shift, 2.0) + 1 );
+		}
+	}
+
+	save_binary(this->detuning_ramp_shape, "detuning_ramp.txt", this->detuning_ramp_time);	
+
 };
 
 //Destructor for the class

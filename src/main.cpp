@@ -54,7 +54,6 @@ int main() {
 
 	//Find the ground state
 	calculate_ground_state(sim_data, psi, pot_data);
-	diagonalize_hamiltonian(sim_data, psi, pot_data);
 	calculate_time_evolution(sim_data, psi, pot_data);
 	return 0;
 
