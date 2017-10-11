@@ -97,29 +97,40 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 	MKL_LONG strides[] = {0, N[0]};
 	DftiCreateDescriptor(&handle_x, DFTI_DOUBLE, DFTI_COMPLEX, 1, N[0]);
 	DftiCreateDescriptor(&handle_y, DFTI_DOUBLE, DFTI_COMPLEX, 1, N[1]);
+
 	DftiSetValue(handle_x, DFTI_NUMBER_OF_TRANSFORMS, N[1]); 
 	DftiSetValue(handle_x, DFTI_BACKWARD_SCALE, (1.0 / (N[0])));
 	DftiSetValue(handle_x, DFTI_INPUT_DISTANCE, N[0]);
+
 	DftiSetValue(handle_y, DFTI_NUMBER_OF_TRANSFORMS, N[0]); 
 	DftiSetValue(handle_y, DFTI_BACKWARD_SCALE, (1.0 / (N[1])));
 	DftiSetValue(handle_y, DFTI_INPUT_DISTANCE, 1);
 	DftiSetValue(handle_y, DFTI_INPUT_STRIDES, strides);
+
 	DftiCommitDescriptor(handle_x);
 	DftiCommitDescriptor(handle_y);
 
-	pot_data.assign_momentum_operator(sim_data, psi, true);
 	//Now we can find the ground state!
 	//
 
 	for (int i = 0; i < sim_data.num_r_steps; ++i) {
 
 		diagonalize_hamiltonian(sim_data, psi, pot_data, i);
-		if (i%1000 == 0) {
+		pot_data.assign_momentum_operator(sim_data, psi, true);
+		if (i == sim_data.detuning_ramp_time) {
+			struct stat sb;
+			if (stat("kin_energy_y.fit", &sb) == 0) {
+				system("rm kin_energy_y.fit");
+				std::cout << "kin_energy_y.fit deleted" << std::endl;
+			}	
+			save_fits_potential(sim_data, pot_data.kinetic_energy_y, "kin_energy_y.fit");
+		}
+		if (i%10 == 0) {
 			std::cout << "Rstep " << i << " out of " << sim_data.num_r_steps << std::endl;
 			char buf1[200];
 			char buf2[200];
 			strcpy(buf1, sim_data.folder);
-			sprintf(buf2, "/psi%d.fit\0", i/1000);
+			sprintf(buf2, "/psi%d.fit\0", i/10);
 			strcat(buf1, buf2);
 			int length = strlen(buf1);
 			char *full_filename;

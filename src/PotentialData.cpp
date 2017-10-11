@@ -42,8 +42,8 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 	this->harmonic_trap = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->non_linear = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->kinetic_energy = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
-	this->kinetic_energy_x = (double*)mkl_malloc(sim_data.get_num_x() * sizeof(double), 64);
-	this->kinetic_energy_y = (double*)mkl_malloc(sim_data.get_num_x() * sizeof(double), 64);
+	this->kinetic_energy_x = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
+	this->kinetic_energy_y = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 	this->pos_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
 	this->mom_operator = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
 	this->mom_operator_x = (MKL_Complex16*)mkl_malloc(sim_data.get_total_pts() * sizeof(MKL_Complex16), 64);
@@ -94,7 +94,6 @@ void PotentialData::assign_position_operator(SimulationData &sim_data, WaveFunct
 			this->pos_operator[i].real = exp(-1.0 * theta);
 			this->pos_operator[i].imag = 0;
 		}
-//	std::cout << pos_operator[1562].real << " " << pos_operator[1562].imag << std::endl;
 	
 	}
 }
@@ -109,6 +108,9 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 		#pragma omp parallel for private(theta, theta_x, theta_y)
 		for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 			theta = (kinetic_energy[i]) * sim_data.dt;
+			theta_x = (kinetic_energy_x[i]) * sim_data.dt;
+			theta_y = (kinetic_energy_y[i]) * sim_data.dt;
+
 			this->mom_operator[i].real = cos(theta);
 			this->mom_operator[i].imag = -1.0 * sin(theta);
 			this->mom_operator_x[i].real = cos(theta_x);
@@ -124,7 +126,6 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 			this->mom_operator[i].real = exp(-1.0 * theta);
 			this->mom_operator[i].imag = 0;
 		}
-//	std::cout << mom_operator[1562].real << " " << mom_operator[1562].imag << std::endl;
 
 	}
 }

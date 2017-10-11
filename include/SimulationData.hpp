@@ -72,7 +72,7 @@ public:
 	double detuning_gradient;
 	double recoil_k;
 	double *detuning_ramp_shape;
-	double detuning_ramp_time;
+	int detuning_ramp_time;
 	//Simulation parameters
 	int num_r_steps;
 	int num_i_steps;

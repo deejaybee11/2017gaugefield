@@ -50,16 +50,16 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	this->length_x = 30;
 	this->length_y = 30;
 	//Number of steps
-	this->num_r_steps = 10000;
+	this->num_r_steps = 1000;
 	this->num_i_steps = 100000;
 	this->gamma_x = 1;
 	this->gamma_y = 1.4;
-	this->beta = 10;
+	this->beta = 3;
 	this->count = 0;
 	//Gauge potential parameters
-	omega_r = 1;
-	detuning_gradient = 1;
-	recoil_k = 1;
+	this->omega_r = 0;
+	this->detuning_gradient = -0.0;
+	this->recoil_k = 0;
 	//Memory allocation time
 	this->x = (double*)mkl_malloc(this->num_x * sizeof(double), 64);
 	this->y = (double*)mkl_malloc(this->num_y * sizeof(double), 64);
@@ -103,7 +103,7 @@ SimulationData::SimulationData(int num_x, int num_y) {
 		this->py[i + n[1]] = temp;
 	}
 
-	detuning_ramp_time = 1500;
+	this->detuning_ramp_time = 150000;
 	this->detuning_ramp_shape = (double*)mkl_malloc(this->detuning_ramp_time * sizeof(double), 64);
 	double temp_val = 0;
 	double ramp_width = 2.3;
@@ -117,7 +117,6 @@ SimulationData::SimulationData(int num_x, int num_y) {
 			this->detuning_ramp_shape[i] = 0;
 		}
 		else {
-//			this->detuning_ramp_shape[i] = 1 - ((0.5 * M_PI) * (ramp_width) / (pow(temp_val - shift, 2.0) + pow(0.5 * ramp_width, 2.0))) / (2 / (M_PI * ramp_width));
 			this->detuning_ramp_shape[i] = 1 - 1 / (pow(temp_val - shift, 2.0) + 1 );
 		}
 	}

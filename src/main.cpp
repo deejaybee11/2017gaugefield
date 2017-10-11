@@ -48,7 +48,7 @@ int main() {
 
 	bool load_bin = false;
 
-	SimulationData sim_data(128, 128);
+	SimulationData sim_data(64, 64);
 	PotentialData pot_data(sim_data);
 	WaveFunction psi(sim_data, pot_data.harmonic_trap);
 
