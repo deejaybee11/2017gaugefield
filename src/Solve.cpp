@@ -115,22 +115,14 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 
 	for (int i = 0; i < sim_data.num_r_steps; ++i) {
 
-		diagonalize_hamiltonian(sim_data, psi, pot_data, i);
-		pot_data.assign_momentum_operator(sim_data, psi, true);
-		if (i == sim_data.detuning_ramp_time) {
-			struct stat sb;
-			if (stat("kin_energy_y.fit", &sb) == 0) {
-				system("rm kin_energy_y.fit");
-				std::cout << "kin_energy_y.fit deleted" << std::endl;
-			}	
-			save_fits_potential(sim_data, pot_data.kinetic_energy_y, "kin_energy_y.fit");
-		}
-		if (i%10 == 0) {
+		diagonalize_hamiltonian(sim_data, psi, pot_data, 1);
+		pot_data.assign_momentum_operator(sim_data, psi, false);
+		if (i%1000 == 0) {
 			std::cout << "Rstep " << i << " out of " << sim_data.num_r_steps << std::endl;
 			char buf1[200];
 			char buf2[200];
 			strcpy(buf1, sim_data.folder);
-			sprintf(buf2, "/psi%d.fit\0", i/10);
+			sprintf(buf2, "/psi%d.fit\0", i/1000);
 			strcat(buf1, buf2);
 			int length = strlen(buf1);
 			char *full_filename;
@@ -141,13 +133,13 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 
 		}
 		
-		psi.calc_abs(sim_data);
-		psi.calc_norm(sim_data);
+//		psi.calc_abs(sim_data);
+//		psi.calc_norm(sim_data);
 		//Nonlinear calculation
-		pot_data.calculate_non_linear_energy(sim_data, psi);
-		pot_data.assign_position_operator(sim_data, psi, false, true);
+//		pot_data.calculate_non_linear_energy(sim_data, psi);
+//		pot_data.assign_position_operator(sim_data, psi, true, true);
 		//Multiply psi by the position operator. dt = dt/2
-		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.pos_operator, psi.psi);
+//		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.pos_operator, psi.psi);
 		//Perform fft in x and multiply by the momentum operator
 		DftiComputeForward(handle_x, psi.psi, psi.psi);
 		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.mom_operator_x, psi.psi);

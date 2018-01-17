@@ -52,18 +52,18 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 	//Fill arrays
 	double harmonic_val = 0;
 	double kin_energy_val = 0;
-	int index;
+	int index, index2;
 	#pragma omp parallel for private(index, harmonic_val)
 	for (int i = 0; i < sim_data.get_num_x(); ++i) {
 		for (int j = 0; j < sim_data.get_num_y(); ++j) {
 			index = i * sim_data.get_num_y() + j;
+			index2 = j*sim_data.get_num_x() + i;
 			harmonic_val = 0.5 * (pow(sim_data.gamma_x, 2.0) * pow(sim_data.x[i], 2.0) + pow(sim_data.gamma_y, 2.0) * pow(sim_data.y[j], 2.0));
 			kin_energy_val = 0.5 * (pow(sim_data.px[i], 2.0) + pow(sim_data.py[j], 2.0));
 			
 			this->harmonic_trap[index] = harmonic_val;
 			this->kinetic_energy[index] = kin_energy_val;
-			this->kinetic_energy_x[index] = 0.5 * pow(sim_data.px[i], 2.0);
-			this->kinetic_energy_y[index] = 0.5 * pow(sim_data.py[j], 2.0);
+			this->kinetic_energy_y[index] = 0.5 * pow(sim_data.py[i], 2.0);
 
 		}
 	} 
@@ -113,8 +113,10 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 
 			this->mom_operator[i].real = cos(theta);
 			this->mom_operator[i].imag = -1.0 * sin(theta);
+
 			this->mom_operator_x[i].real = cos(theta_x);
 			this->mom_operator_x[i].imag = -1.0 * sin(theta_x);
+
 			this->mom_operator_y[i].real = cos(theta_y);
 			this->mom_operator_y[i].imag = -1.0 * sin(theta_y);
 		}

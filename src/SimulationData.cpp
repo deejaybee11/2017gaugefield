@@ -31,6 +31,7 @@
 #include <math.h>
 #include <fstream>
 #include <string.h>
+#include <iomanip>
 
 #include "../include/SaveData.hpp"
 
@@ -47,18 +48,18 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	this->num_x = num_x;
 	this->num_y = num_y;
 	this->total_num_pts = num_x * num_y;
-	this->length_x = 30;
-	this->length_y = 30;
+	this->length_x = 15;
+	this->length_y = 15;
 	//Number of steps
-	this->num_r_steps = 1000;
-	this->num_i_steps = 100000;
+	this->num_r_steps = 1000000;
+	this->num_i_steps = 1000000;
 	this->gamma_x = 1;
-	this->gamma_y = 1.4;
-	this->beta = 3;
+	this->gamma_y = 1;
+	this->beta = 2;
 	this->count = 0;
 	//Gauge potential parameters
 	this->omega_r = 0;
-	this->detuning_gradient = -0.0;
+	this->detuning_gradient = -0;
 	this->recoil_k = 0;
 	//Memory allocation time
 	this->x = (double*)mkl_malloc(this->num_x * sizeof(double), 64);
@@ -84,9 +85,7 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	}
 	this->dx = this->x[2]-this->x[1];
 	this->dy = this->y[2]-this->y[1];
-	this->dt = 0.001 * this->dx;
-	std::cout << "dx = " << this->dx << std::endl;
-	std::cout << "dt = " << this->dt << std::endl;
+	this->dt = 0.0001 * this->dx;
 	//Perform FFT shift on momentum arrays to compensate for negative frequencies shifting
 	double temp;
 	int n[2];
@@ -103,21 +102,21 @@ SimulationData::SimulationData(int num_x, int num_y) {
 		this->py[i + n[1]] = temp;
 	}
 
-	this->detuning_ramp_time = 150000;
+	this->detuning_ramp_time = 100000;
 	this->detuning_ramp_shape = (double*)mkl_malloc(this->detuning_ramp_time * sizeof(double), 64);
 	double temp_val = 0;
-	double ramp_width = 2.3;
-	double shift = 0.5;
+	double ramp_width = 20000;
+	double shift = 10000;
 
 	for (int i = 0; i < this->detuning_ramp_time; ++i) {
 
-		temp_val = 0 + i * 2 * M_PI / ((double)this->detuning_ramp_time - 1.0);
-		if (temp_val < 0.5) {
+		temp_val = i;
+		if (i < shift) {
 
 			this->detuning_ramp_shape[i] = 0;
 		}
 		else {
-			this->detuning_ramp_shape[i] = 1 - 1 / (pow(temp_val - shift, 2.0) + 1 );
+			this->detuning_ramp_shape[i] = 1 - (1*ramp_width*ramp_width) / (pow(temp_val - shift, 2.0) + ramp_width*ramp_width );
 		}
 	}
 

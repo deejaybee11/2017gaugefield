@@ -54,15 +54,26 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 	p_minus_a = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 
 	if (count >= sim_data.detuning_ramp_time) {
+		system("rm kinx.fit");
+		system("rm kiny.fit");
+		save_fits_potential(sim_data, pot_data.kinetic_energy_x, "kinx.fit");
+		save_fits_potential(sim_data, pot_data.kinetic_energy_y, "kiny.fit");
 		goto cleanup;
 	}
 	else {
 		for (int i = 0; i < sim_data.get_num_y(); ++i) {
 			delta[i] = sim_data.detuning_ramp_shape[count] * sim_data.detuning_gradient * sim_data.y[i];
+			delta[i] = sim_data.detuning_gradient;
 		}
 
 	}
-		
+
+	if (count > sim_data.detuning_ramp_time) {
+		save_binary(delta, "detuning.txt", sim_data.detuning_ramp_time);	
+	}
+
+//	std::cout << "Detuning Ramp shape " << sim_data.detuning_ramp_shape[count] << std::endl;
+//	std::cout << "Count is "  << count << "and gradient is " << sim_data.detuning_gradient  << std::endl;		
 
 	//diagonalization variables. Refer to documentation for what they are (I forgot)
 	MKL_INT info, n = Nm, lda = 3, ldvl = 3, ldvr = 3;
@@ -72,13 +83,14 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 
 	int index;
 	#pragma omp parallel for private(index, min, H1, H2, H3, eigenvalues)
-	for (int i = 0; i < sim_data.get_num_x(); ++i) {
-		for (int j = 0; j < sim_data.get_num_y(); ++j) {
+	for (int i = 0; i < sim_data.get_num_y(); ++i) {
+		for (int j = 0; j < sim_data.get_num_x(); ++j) {
 
 			index = i*sim_data.get_num_y() + j;
-			H1 = 0.5 * pow(sim_data.px[i] + 2 * sim_data.recoil_k, 2.0) - delta[j];
-			H2 = 0.5 * pow(sim_data.px[i], 2.0);
-			H3 = 0.5 * pow(sim_data.px[i] - 2 * sim_data.recoil_k, 2.0) + delta[j];
+
+			H1 = 0.5 * pow(sim_data.px[j] - 2 * sim_data.recoil_k, 2.0) + delta[i];
+			H2 = 0.5 * pow(sim_data.px[j], 2.0);
+			H3 = 0.5 * pow(sim_data.px[j] + 2 * sim_data.recoil_k, 2.0) - delta[i];
 
 			MKL_Complex16 hamiltonian[9] = {{H1, 0}, {0.5 * sim_data.omega_r, 0}, {0, 0}, {0.5 * sim_data.omega_r, 0}, {H2, 0}, {0.5 * sim_data.omega_r, 0}, {0, 0}, {0.5 * sim_data.omega_r, 0}, {H3, 0}};
 
@@ -95,16 +107,17 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 			p_minus_a[index] = min;
 			
 		}
+		if (i == -10) {
+			save_binary(p_minus_a, "1array.txt", sim_data.get_num_x());
+			std::cout << H1 << " " << H2 << " " << H3 << std::endl;
+			std::cout << min << std::endl;
+		}
+
 	}
 	
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
-		pot_data.kinetic_energy_y[i] = p_minus_a[i];
+		pot_data.kinetic_energy_x[i] = p_minus_a[i];
 	}
-
-	system("rm test.fit");
-	system("rm deltatest.txt");
-	save_fits_potential(sim_data, p_minus_a, "test.fit");
-	save_binary(delta, "deltatest.txt", sim_data.get_num_y());
 
 	goto cleanup;
 
