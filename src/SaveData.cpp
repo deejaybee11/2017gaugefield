@@ -28,6 +28,12 @@
 
 #include "../include/SaveData.hpp"
 
+static void fits_open_overwrite(fitsfile **fptr, const char *filename, int *status) {
+	char buf[512];
+	snprintf(buf, sizeof(buf), "!%s", filename);
+	fits_create_file(fptr, buf, status);
+}
+
 void save_fits_wavefunction(SimulationData &sim_data, WaveFunction &psi, const char *fits_file_name) {
 
 	double *save_data = 0;
@@ -37,23 +43,22 @@ void save_fits_wavefunction(SimulationData &sim_data, WaveFunction &psi, const c
 	int status = 0;
 	long fpixel = 1, naxis = 2, nelements;
 	long naxes[2] = {sim_data.get_num_y(), sim_data.get_num_x()};
-	//Calc abs psi
 	psi.calc_abs(sim_data);
 	#pragma omp parallel for
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		save_data[i] = psi.abs_psi[i];
 	}
-	fits_create_file(&fptr, fits_file_name, &status);
+	fits_open_overwrite(&fptr, fits_file_name, &status);
 	fits_create_img(fptr, DOUBLE_IMG, naxis, naxes, &status);
 	nelements = naxes[0]*naxes[1];
 	fits_write_img(fptr, TDOUBLE, fpixel, nelements, save_data, &status);
 	fits_close_file(fptr, &status);
-	fits_report_error(stderr, status);
+	if (status) fits_report_error(stderr, status);
 
 	mkl_free(save_data);
 }
 
-void save_fits_potential(SimulationData &sim_data, double *potential, const char * fits_file_name) {
+void save_fits_potential(SimulationData &sim_data, double *potential, const char *fits_file_name) {
 
 	fitsfile *fptr;
 	int status = 0;
@@ -65,19 +70,19 @@ void save_fits_potential(SimulationData &sim_data, double *potential, const char
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		save_data[i] = potential[i];
 	}
-	fits_create_file(&fptr, fits_file_name, &status);
+	fits_open_overwrite(&fptr, fits_file_name, &status);
 	fits_create_img(fptr, DOUBLE_IMG, naxis, naxes, &status);
 	nelements = naxes[0]*naxes[1];
 	fits_write_img(fptr, TDOUBLE, fpixel, nelements, save_data, &status);
 	fits_close_file(fptr, &status);
-	fits_report_error(stderr, status);
+	if (status) fits_report_error(stderr, status);
 
 	mkl_free(save_data);
 }
 
 
 void save_binary(double *data, const char *filename, int length) {
-	
+
 	remove(filename);
 	std::ofstream output(filename);
 	output << length << "\n";
@@ -85,6 +90,38 @@ void save_binary(double *data, const char *filename, int length) {
 		output << data[i] << "\n";
 	}
 	output.close();
+}
+
+void save_wavefunction_binary(WaveFunction &psi, SimulationData &sim_data, const char *filename) {
+	std::ofstream f(filename, std::ios::binary);
+	int nx = sim_data.get_num_x(), ny = sim_data.get_num_y();
+	f.write(reinterpret_cast<const char*>(&nx), sizeof(int));
+	f.write(reinterpret_cast<const char*>(&ny), sizeof(int));
+	f.write(reinterpret_cast<const char*>(psi.psi), nx * ny * sizeof(MKL_Complex16));
+	f.close();
+	std::cout << "Ground state saved to " << filename << std::endl;
+}
+
+bool load_wavefunction_binary(WaveFunction &psi, SimulationData &sim_data, const char *filename) {
+	std::ifstream f(filename, std::ios::binary);
+	if (!f) return false;
+	int nx, ny;
+	f.read(reinterpret_cast<char*>(&nx), sizeof(int));
+	f.read(reinterpret_cast<char*>(&ny), sizeof(int));
+	if (nx != sim_data.get_num_x() || ny != sim_data.get_num_y()) {
+		std::cerr << "Grid mismatch in " << filename << ": saved "
+		          << nx << "x" << ny << ", expected "
+		          << sim_data.get_num_x() << "x" << sim_data.get_num_y() << std::endl;
+		return false;
+	}
+	f.read(reinterpret_cast<char*>(psi.psi), nx * ny * sizeof(MKL_Complex16));
+	if (!f) {
+		std::cerr << "Failed to read wavefunction data from " << filename << std::endl;
+		return false;
+	}
+	psi.calc_abs(sim_data);
+	std::cout << "Ground state loaded from " << filename << std::endl;
+	return true;
 }
 
 

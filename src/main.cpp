@@ -41,19 +41,20 @@
 
 int main() {
 
-	putenv("MKP_BLOCKTIME=0");
-	putenv("KMP_AFFINITY=verbose,granularity=fine,compact,norespect");
+	putenv("KMP_BLOCKTIME=0");
 	mkl_set_num_threads(mkl_get_max_threads());
 	mkl_disable_fast_mm();
 
-	bool load_bin = false;
+	bool load_bin = true;
 
-	SimulationData sim_data(64, 64);
+	SimulationData sim_data(256, 256);
 	PotentialData pot_data(sim_data);
 	WaveFunction psi(sim_data, pot_data.harmonic_trap);
 
 	//Find the ground state
-	calculate_ground_state(sim_data, psi, pot_data);
+	if (!load_bin || !load_wavefunction_binary(psi, sim_data, "GroundState.bin")) {
+		calculate_ground_state(sim_data, psi, pot_data);
+	}
 	calculate_time_evolution(sim_data, psi, pot_data);
 	return 0;
 

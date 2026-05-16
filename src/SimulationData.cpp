@@ -40,7 +40,7 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	//Folder based on current time
 	time(&this->current_time);
 	this->mytime = localtime(&this->current_time);
-	sprintf(this->command, "mkdir fits/%.4d%.2d%.2d%.2d%.2d", 1900 + this->mytime->tm_year, 1 + mytime->tm_mon, mytime->tm_mday, mytime->tm_hour, mytime->tm_min);
+	sprintf(this->command, "mkdir -p fits/%.4d%.2d%.2d%.2d%.2d", 1900 + this->mytime->tm_year, 1 + mytime->tm_mon, mytime->tm_mday, mytime->tm_hour, mytime->tm_min);
 	system(this->command);
 	printf("Directory created\n");
 	sprintf(this->folder, "fits/%.4d%.2d%.2d%.2d%.2d", 1900 + this->mytime->tm_year, 1 + mytime->tm_mon, mytime->tm_mday, mytime->tm_hour, mytime->tm_min);
@@ -48,14 +48,14 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	this->num_x = num_x;
 	this->num_y = num_y;
 	this->total_num_pts = num_x * num_y;
-	this->length_x = 15;
-	this->length_y = 15;
+	this->length_x = 30;
+	this->length_y = 30;
 	//Number of steps
 	this->num_r_steps = 1000000;
 	this->num_i_steps = 1000000;
 	this->gamma_x = 1;
 	this->gamma_y = 1;
-	this->beta = 2;
+	this->beta = 2616;
 	this->count = 0;
 	//Gauge potential parameters
 	this->omega_r = 0;
@@ -112,11 +112,10 @@ SimulationData::SimulationData(int num_x, int num_y) {
 
 		temp_val = i;
 		if (i < shift) {
-
 			this->detuning_ramp_shape[i] = 0;
 		}
 		else {
-			this->detuning_ramp_shape[i] = 1 - (1*ramp_width*ramp_width) / (pow(temp_val - shift, 2.0) + ramp_width*ramp_width );
+			this->detuning_ramp_shape[i] = 0.5 * (1.0 + tanh(6.0 * (temp_val - shift - 0.5*ramp_width) / ramp_width));
 		}
 	}
 

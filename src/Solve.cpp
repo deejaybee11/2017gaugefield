@@ -61,14 +61,22 @@ void calculate_ground_state(SimulationData &sim_data, WaveFunction &psi, Potenti
 	pot_data.assign_momentum_operator(sim_data, psi, false);
 	//Now we can find the ground state!
 	//
+	double mu = 0, mu_prev = 0;
+	const double mu_tol = 1e-6;
 	for (int i = 0; i < sim_data.num_i_steps; ++i) {
 
-		if (i%1000 == 0) {
-			std::cout << "Istep " << i << " out of " << sim_data.num_i_steps << std::endl;
-		}
-		
 		psi.calc_abs(sim_data);
 		psi.calc_norm(sim_data);
+		mu = -log(psi.last_norm_sq) / (2.0 * sim_data.dt);
+
+		if ((i%1000 == 0)&& (i>0)) {
+			std::cout << "Istep " << i << "  mu = " << mu << std::endl;
+		}
+		if (i > 0 && fabs(mu - mu_prev) < mu_tol * fabs(mu)) {
+			std::cout << "Converged at step " << i << "  mu = " << mu << std::endl;
+			break;
+		}
+		mu_prev = mu;
 		//Nonlinear calculation
 		pot_data.calculate_non_linear_energy(sim_data, psi);
 		pot_data.assign_position_operator(sim_data, psi, true, false);
@@ -83,6 +91,7 @@ void calculate_ground_state(SimulationData &sim_data, WaveFunction &psi, Potenti
 	}
 
 	DftiFreeDescriptor(&handle);
+	save_wavefunction_binary(psi, sim_data, "GroundState.bin");
 	save_fits_wavefunction(sim_data, psi, "GroundState.fit");
 }
 
@@ -113,10 +122,11 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 	//Now we can find the ground state!
 	//
 
+	pot_data.assign_momentum_operator(sim_data, psi, true);
+
 	for (int i = 0; i < sim_data.num_r_steps; ++i) {
 
-		diagonalize_hamiltonian(sim_data, psi, pot_data, 1);
-		pot_data.assign_momentum_operator(sim_data, psi, false);
+		diagonalize_hamiltonian(sim_data, psi, pot_data, i);
 		if (i%1000 == 0) {
 			std::cout << "Rstep " << i << " out of " << sim_data.num_r_steps << std::endl;
 			char buf1[200];
@@ -130,25 +140,22 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 			strcpy(full_filename, buf1);
 			save_fits_wavefunction(sim_data, psi, full_filename);
 			mkl_free(full_filename);
-
 		}
-		
-//		psi.calc_abs(sim_data);
-//		psi.calc_norm(sim_data);
-		//Nonlinear calculation
-//		pot_data.calculate_non_linear_energy(sim_data, psi);
-//		pot_data.assign_position_operator(sim_data, psi, true, true);
-		//Multiply psi by the position operator. dt = dt/2
-//		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.pos_operator, psi.psi);
-		//Perform fft in x and multiply by the momentum operator
+
+		//First half-step position operator (trap + nonlinear)
+		pot_data.calculate_non_linear_energy(sim_data, psi);
+		pot_data.assign_position_operator(sim_data, psi, true, true);
+		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.pos_operator, psi.psi);
+		//Full-step momentum operator: FFT x, then y
 		DftiComputeForward(handle_x, psi.psi, psi.psi);
 		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.mom_operator_x, psi.psi);
 		DftiComputeBackward(handle_x, psi.psi, psi.psi);
-		//then do y transform
 		DftiComputeForward(handle_y, psi.psi, psi.psi);
 		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.mom_operator_y, psi.psi);
 		DftiComputeBackward(handle_y, psi.psi, psi.psi);
-		//transform back and multiply by pos operator again
+		//Second half-step position operator (recompute density after kinetic step)
+		pot_data.calculate_non_linear_energy(sim_data, psi);
+		pot_data.assign_position_operator(sim_data, psi, true, true);
 		vzMul(sim_data.get_total_pts(), psi.psi, pot_data.pos_operator, psi.psi);
 	}
 

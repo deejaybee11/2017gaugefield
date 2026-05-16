@@ -134,12 +134,9 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 
 void PotentialData::calculate_non_linear_energy(SimulationData &sim_data, WaveFunction &psi) {
 
-	double nonlinearval = 0;
 	psi.calc_abs(sim_data);
-	#pragma omp parallel for private(nonlinearval)
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
-		nonlinearval = sim_data.beta * psi.abs_psi[i];
-		this->non_linear[i] = nonlinearval;
+		this->non_linear[i] = sim_data.beta * psi.abs_psi[i];
 	}
 }
 

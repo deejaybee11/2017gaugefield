@@ -38,6 +38,7 @@ public:
 	MKL_Complex16 *psi;
 	MKL_Complex16 *psi_conj;
 	double norm_psi;
+	double last_norm_sq = 1.0;
 	double *abs_psi;
 
 	void calc_abs(SimulationData &sim_data);

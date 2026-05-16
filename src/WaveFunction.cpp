@@ -87,7 +87,10 @@ void WaveFunction::calc_norm(SimulationData &sim_data) {
 		psi_sum += this->abs_psi[i];
 	}
 
-	norm_fac = sqrt(1.0 / (psi_sum * sim_data.dx * sim_data.dy));
+	this->last_norm_sq = psi_sum * sim_data.dx * sim_data.dy;
+	// printf("Last norm squared: %f\n", this->last_norm_sq);
+	norm_fac = sqrt(1.0 / this->last_norm_sq);
+	// printf("Norm factor is %f\n", norm_fac);
 	#pragma omp parallel for private(temp_real, temp_imag)
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		temp_real = this->psi[i].real * norm_fac;

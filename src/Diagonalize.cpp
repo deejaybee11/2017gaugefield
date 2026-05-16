@@ -54,18 +54,20 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 	p_minus_a = (double*)mkl_malloc(sim_data.get_total_pts() * sizeof(double), 64);
 
 	if (count >= sim_data.detuning_ramp_time) {
-		system("rm kinx.fit");
-		system("rm kiny.fit");
-		save_fits_potential(sim_data, pot_data.kinetic_energy_x, "kinx.fit");
-		save_fits_potential(sim_data, pot_data.kinetic_energy_y, "kiny.fit");
-		goto cleanup;
+		if (count == sim_data.detuning_ramp_time) {
+			system("rm kinx.fit");
+			system("rm kiny.fit");
+			save_fits_potential(sim_data, pot_data.kinetic_energy_x, "kinx.fit");
+			save_fits_potential(sim_data, pot_data.kinetic_energy_y, "kiny.fit");
+		}
+		mkl_free(delta);
+		mkl_free(p_minus_a);
+		return 0;
 	}
 	else {
 		for (int i = 0; i < sim_data.get_num_y(); ++i) {
 			delta[i] = sim_data.detuning_ramp_shape[count] * sim_data.detuning_gradient * sim_data.y[i];
-			delta[i] = sim_data.detuning_gradient;
 		}
-
 	}
 
 	if (count > sim_data.detuning_ramp_time) {
@@ -119,11 +121,8 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 		pot_data.kinetic_energy_x[i] = p_minus_a[i];
 	}
 
-	goto cleanup;
-
-	cleanup:
-		mkl_free(delta);
-		mkl_free(p_minus_a);
-		if (info != 0) exit(EXIT_FAILURE);
-		return 0;
+	mkl_free(delta);
+	mkl_free(p_minus_a);
+	if (info != 0) exit(EXIT_FAILURE);
+	return 0;
 }
