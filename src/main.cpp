@@ -32,6 +32,7 @@
 #include "../include/PotentialData.hpp"
 #include "../include/Solve.hpp"
 #include "../include/Diagonalize.hpp"
+#include "../include/SaveData.hpp"
 
 #if !defined(MKL_ILP64)
 	#define LI "%li"
@@ -45,7 +46,7 @@ int main() {
 	mkl_set_num_threads(mkl_get_max_threads());
 	mkl_disable_fast_mm();
 
-	bool load_bin = true;
+	bool load_bin = false;
 
 	SimulationData sim_data(256, 256);
 	PotentialData pot_data(sim_data);

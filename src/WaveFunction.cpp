@@ -51,7 +51,7 @@ WaveFunction::WaveFunction(SimulationData &sim_data, double *harmonic_trap) {
 		for (int j = 0; j < sim_data.get_num_y(); ++j) {
 
 			index = i*sim_data.get_num_y() + j;
-			if (sqrt(pow(sim_data.x[i], 2.0) + pow(sim_data.y[j], 2.0) < 5)) {
+			if (sqrt(pow(sim_data.x[i], 2.0) + pow(sim_data.y[j], 2.0)) < 5) {
 				this->psi[index].real = 1;
 				this->psi[index].imag = 0;
 			}

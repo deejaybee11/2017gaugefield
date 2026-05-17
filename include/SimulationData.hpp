@@ -76,6 +76,7 @@ public:
 	//Simulation parameters
 	int num_r_steps;
 	int num_i_steps;
+	int save_interval;
 	const char *R = "REAL";
 	const char *I = "IMAG";
 	

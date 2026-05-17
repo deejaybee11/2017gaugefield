@@ -59,6 +59,10 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 			system("rm kiny.fit");
 			save_fits_potential(sim_data, pot_data.kinetic_energy_x, "kinx.fit");
 			save_fits_potential(sim_data, pot_data.kinetic_energy_y, "kiny.fit");
+			// save final detuning profile (length = num_y, one value per y point)
+			for (int i = 0; i < sim_data.get_num_y(); ++i)
+				delta[i] = sim_data.detuning_gradient * sim_data.y[i];
+			save_binary(delta, "detuning.txt", sim_data.get_num_y());
 		}
 		mkl_free(delta);
 		mkl_free(p_minus_a);
@@ -68,10 +72,6 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 		for (int i = 0; i < sim_data.get_num_y(); ++i) {
 			delta[i] = sim_data.detuning_ramp_shape[count] * sim_data.detuning_gradient * sim_data.y[i];
 		}
-	}
-
-	if (count > sim_data.detuning_ramp_time) {
-		save_binary(delta, "detuning.txt", sim_data.detuning_ramp_time);	
 	}
 
 //	std::cout << "Detuning Ramp shape " << sim_data.detuning_ramp_shape[count] << std::endl;

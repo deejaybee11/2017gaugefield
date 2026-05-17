@@ -35,6 +35,24 @@
 
 #include "../include/SaveData.hpp"
 
+// ── User-configurable parameters ─────────────────────────────────────────────
+static const double TRAP_FREQ_HZ    = 150.0;   // trap frequency [Hz]
+static const double MASS_AMU        = 87.0;    // atomic mass [amu]
+static const double LASER_NM        = 790.0;   // Raman laser wavelength [nm]
+static const double OMEGA_R_EREC    = 8.0;     // Rabi coupling [E_rec]
+static const double GRAD_KHZ_PER_UM = -0.4;     // detuning gradient [kHz/μm]
+static const double RAMP_TOTAL_MS   = 50;    // total ramp duration [ms]
+static const double RAMP_WIDTH_MS   = 30;    // tanh ramp width [ms]
+static const double RAMP_SHIFT_MS   = 0.12;    // hold before ramp starts [ms]
+static const double BOX_UM          = 26.4;    // simulation box size [μm]
+static const double DT_US           = 1.0;     // time step [μs]
+static const double RUN_TIME_MS     = 400.0;   // real-time evolution duration [ms]
+static const double SAVE_INTERVAL_MS = 0.5;    // wavefunction save interval [ms]
+static const double BETA            = 2616.0;  // interaction strength
+static const double GAMMA_X         = 1.0;     // trap anisotropy x
+static const double GAMMA_Y         = 1.0;     // trap anisotropy y
+// ─────────────────────────────────────────────────────────────────────────────
+
 //Constructor
 SimulationData::SimulationData(int num_x, int num_y) {
 	//Folder based on current time
@@ -44,23 +62,34 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	system(this->command);
 	printf("Directory created\n");
 	sprintf(this->folder, "fits/%.4d%.2d%.2d%.2d%.2d", 1900 + this->mytime->tm_year, 1 + mytime->tm_mon, mytime->tm_mday, mytime->tm_hour, mytime->tm_min);
+	//Physical constants and trap parameters (Rb-87)
+	const double hbar       = 1.0546e-34;
+	const double mass       = MASS_AMU * 1.66054e-27;
+	const double omega_trap = 2.0 * M_PI * TRAP_FREQ_HZ;
+	double lx = sqrt(hbar / (mass * omega_trap));   // oscillator length [m]
+
 	//Simulation grid
 	this->num_x = num_x;
 	this->num_y = num_y;
 	this->total_num_pts = num_x * num_y;
-	this->length_x = 30;
-	this->length_y = 30;
+	this->length_x = BOX_UM * 1e-6 / lx;
+	this->length_y = BOX_UM * 1e-6 / lx;
 	//Number of steps
-	this->num_r_steps = 1000000;
+	this->num_r_steps    = (int)(RUN_TIME_MS      * 1000.0 / DT_US);
+	this->save_interval  = (int)(SAVE_INTERVAL_MS * 1000.0 / DT_US);
 	this->num_i_steps = 1000000;
-	this->gamma_x = 1;
-	this->gamma_y = 1;
-	this->beta = 2616;
+	this->gamma_x = GAMMA_X;
+	this->gamma_y = GAMMA_Y;
+	this->beta    = BETA;
 	this->count = 0;
-	//Gauge potential parameters
-	this->omega_r = 0;
-	this->detuning_gradient = -0;
-	this->recoil_k = 0;
+	//Gauge potential parameters (specify in physical units, converted to dimensionless trap units)
+	double k_L              = 2.0 * M_PI / (LASER_NM * 1e-9);  // laser wavevector [m⁻¹]
+	this->recoil_k          = k_L * lx;                         // k_L in units of 1/ℓ
+	double E_rec            = 0.5 * pow(this->recoil_k, 2.0);  // E_rec in units of ℏω_trap
+	this->omega_r           = OMEGA_R_EREC * E_rec;             // E_rec → ℏω_trap
+	this->detuning_gradient = GRAD_KHZ_PER_UM * (2.0 * M_PI * 1e9 * lx / omega_trap); // kHz/μm → ℏω_trap/ℓ
+	printf("Unit conversion: lx=%.3e m, k_rec=%.3f/ell, E_rec=%.2f hOmega, Omega_r=%.1f hOmega\n",
+	       lx, this->recoil_k, E_rec, this->omega_r);
 	//Memory allocation time
 	this->x = (double*)mkl_malloc(this->num_x * sizeof(double), 64);
 	this->y = (double*)mkl_malloc(this->num_y * sizeof(double), 64);
@@ -85,7 +114,7 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	}
 	this->dx = this->x[2]-this->x[1];
 	this->dy = this->y[2]-this->y[1];
-	this->dt = 0.0001 * this->dx;
+	this->dt = DT_US * 1e-6 * omega_trap;
 	//Perform FFT shift on momentum arrays to compensate for negative frequencies shifting
 	double temp;
 	int n[2];
@@ -102,11 +131,12 @@ SimulationData::SimulationData(int num_x, int num_y) {
 		this->py[i + n[1]] = temp;
 	}
 
-	this->detuning_ramp_time = 100000;
+	double ms_to_steps       = 1e-3 * omega_trap / this->dt;
+	this->detuning_ramp_time = (int)(RAMP_TOTAL_MS * ms_to_steps);
 	this->detuning_ramp_shape = (double*)mkl_malloc(this->detuning_ramp_time * sizeof(double), 64);
 	double temp_val = 0;
-	double ramp_width = 20000;
-	double shift = 10000;
+	double ramp_width = RAMP_WIDTH_MS * ms_to_steps;
+	double shift      = RAMP_SHIFT_MS * ms_to_steps;
 
 	for (int i = 0; i < this->detuning_ramp_time; ++i) {
 

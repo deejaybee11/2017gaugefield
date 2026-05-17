@@ -122,24 +122,27 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 	//Now we can find the ground state!
 	//
 
-	pot_data.assign_momentum_operator(sim_data, psi, true);
+	// Seed symmetry breaking — needed for vortex nucleation in a deterministic GPE
+	srand(42);
+	const double noise_amp = 1e-3;
+	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
+		psi.psi[i].real += noise_amp * ((double)rand() / RAND_MAX - 0.5);
+		psi.psi[i].imag += noise_amp * ((double)rand() / RAND_MAX - 0.5);
+	}
 
 	for (int i = 0; i < sim_data.num_r_steps; ++i) {
 
 		diagonalize_hamiltonian(sim_data, psi, pot_data, i);
-		if (i%1000 == 0) {
+		pot_data.assign_momentum_operator(sim_data, psi, true);  // update mom_operator_x from kinetic_energy_x each step
+
+		if (i % sim_data.save_interval == 0) {
+			int frame = i / sim_data.save_interval;
 			std::cout << "Rstep " << i << " out of " << sim_data.num_r_steps << std::endl;
-			char buf1[200];
-			char buf2[200];
-			strcpy(buf1, sim_data.folder);
-			sprintf(buf2, "/psi%d.fit\0", i/1000);
-			strcat(buf1, buf2);
-			int length = strlen(buf1);
-			char *full_filename;
-			full_filename = (char*)mkl_malloc(length * sizeof(char), 64);
-			strcpy(full_filename, buf1);
-			save_fits_wavefunction(sim_data, psi, full_filename);
-			mkl_free(full_filename);
+			char psi_path[256], kinx_path[256];
+			sprintf(psi_path,  "%s/psi%d.fit",  sim_data.folder, frame);
+			sprintf(kinx_path, "%s/kinx%d.fit", sim_data.folder, frame);
+			save_fits_wavefunction(sim_data, psi, psi_path);
+			save_fits_potential(sim_data, pot_data.kinetic_energy_x, kinx_path);
 		}
 
 		//First half-step position operator (trap + nonlinear)
