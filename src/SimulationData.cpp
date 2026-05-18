@@ -36,17 +36,17 @@
 #include "../include/SaveData.hpp"
 
 // ── User-configurable parameters ─────────────────────────────────────────────
-static const double TRAP_FREQ_HZ    = 100.0;   // trap frequency [Hz]
+static const double TRAP_FREQ_HZ    = 70.0;   // trap frequency [Hz]
 static const double MASS_AMU        = 87.0;    // atomic mass [amu]
 static const double LASER_NM        = 790.0;   // Raman laser wavelength [nm]
 static const double OMEGA_R_EREC    = 8.0;     // Rabi coupling [E_rec]
-static const double GRAD_KHZ_PER_UM = -0.4;     // detuning gradient [kHz/μm]
+static const double GRAD_KHZ_PER_UM = -0.6;     // detuning gradient [kHz/μm]
 static const double RAMP_TOTAL_MS   = 80;    // total ramp duration [ms]
 static const double RAMP_WIDTH_MS   = 60;    // tanh ramp width [ms]
 static const double RAMP_SHIFT_MS   = 5;    // hold before ramp starts [ms]
-static const double BOX_UM          = 26.4;    // simulation box size [μm]
+static const double BOX_UM          = 35;    // simulation box size [μm]
 static const double DT_US           = 1.0;     // time step [μs]
-static const double RUN_TIME_MS     = 400.0;   // real-time evolution duration [ms]
+static const double RUN_TIME_MS     = 800.0;   // real-time evolution duration [ms]
 static const double SAVE_INTERVAL_MS = 0.5;    // wavefunction save interval [ms]
 static const double N_ATOMS         = 1e5;     // number of atoms
 static const double A_SCATT_BOHR    = 100.4;   // s-wave scattering length [a_0] (Rb-87 ≈ 100.4)
