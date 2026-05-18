@@ -53,7 +53,7 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 	double harmonic_val = 0;
 	double kin_energy_val = 0;
 	int index, index2;
-	#pragma omp parallel for private(index, harmonic_val)
+	#pragma omp parallel for private(index, index2, harmonic_val)
 	for (int i = 0; i < sim_data.get_num_x(); ++i) {
 		for (int j = 0; j < sim_data.get_num_y(); ++j) {
 			index = i * sim_data.get_num_y() + j;

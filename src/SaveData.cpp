@@ -34,6 +34,18 @@ static void fits_open_overwrite(fitsfile **fptr, const char *filename, int *stat
 	fits_create_file(fptr, buf, status);
 }
 
+static void write_sim_header(fitsfile *fptr, SimulationData &sim_data, int *status) {
+	fits_write_key(fptr, TDOUBLE, "ELL_UM",   &sim_data.ell_um,            "oscillator length [um]",       status);
+	fits_write_key(fptr, TDOUBLE, "TRAP_HZ",  &sim_data.trap_hz,           "trap frequency [Hz]",          status);
+	fits_write_key(fptr, TDOUBLE, "K_REC",    &sim_data.recoil_k,          "recoil momentum [hbar/ell]",   status);
+	fits_write_key(fptr, TDOUBLE, "OMEGA_R",  &sim_data.omega_r,           "Rabi coupling [hbar*omega]",   status);
+	fits_write_key(fptr, TDOUBLE, "DET_GRAD", &sim_data.detuning_gradient, "detuning gradient [hbar*w/l]", status);
+	fits_write_key(fptr, TDOUBLE, "HALFBOX",  &sim_data.length_x,          "full box length [ell]",        status);
+	fits_write_key(fptr, TDOUBLE, "DT_US",    &sim_data.dt_us,             "timestep [us]",                status);
+	int savintv = sim_data.save_interval;
+	fits_write_key(fptr, TINT,    "SAVINTV",  &savintv,                    "save interval [steps]",        status);
+}
+
 void save_fits_wavefunction(SimulationData &sim_data, WaveFunction &psi, const char *fits_file_name) {
 
 	double *save_data = 0;
@@ -50,6 +62,7 @@ void save_fits_wavefunction(SimulationData &sim_data, WaveFunction &psi, const c
 	}
 	fits_open_overwrite(&fptr, fits_file_name, &status);
 	fits_create_img(fptr, DOUBLE_IMG, naxis, naxes, &status);
+	write_sim_header(fptr, sim_data, &status);
 	nelements = naxes[0]*naxes[1];
 	fits_write_img(fptr, TDOUBLE, fpixel, nelements, save_data, &status);
 	fits_close_file(fptr, &status);
@@ -72,6 +85,7 @@ void save_fits_potential(SimulationData &sim_data, double *potential, const char
 	}
 	fits_open_overwrite(&fptr, fits_file_name, &status);
 	fits_create_img(fptr, DOUBLE_IMG, naxis, naxes, &status);
+	write_sim_header(fptr, sim_data, &status);
 	nelements = naxes[0]*naxes[1];
 	fits_write_img(fptr, TDOUBLE, fpixel, nelements, save_data, &status);
 	fits_close_file(fptr, &status);

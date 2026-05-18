@@ -73,6 +73,10 @@ public:
 	double recoil_k;
 	double *detuning_ramp_shape;
 	int detuning_ramp_time;
+	// Physical convenience values (written to FITS headers)
+	double ell_um;   // oscillator length [μm]
+	double dt_us;    // timestep [μs]
+	double trap_hz;  // trap frequency [Hz]
 	//Simulation parameters
 	int num_r_steps;
 	int num_i_steps;

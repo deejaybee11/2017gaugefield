@@ -124,7 +124,7 @@ void calculate_time_evolution(SimulationData &sim_data, WaveFunction &psi, Poten
 
 	// Seed symmetry breaking — needed for vortex nucleation in a deterministic GPE
 	srand(42);
-	const double noise_amp = 1e-3;
+	const double noise_amp = 1e-2;
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
 		psi.psi[i].real += noise_amp * ((double)rand() / RAND_MAX - 0.5);
 		psi.psi[i].imag += noise_amp * ((double)rand() / RAND_MAX - 0.5);

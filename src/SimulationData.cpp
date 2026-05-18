@@ -36,19 +36,21 @@
 #include "../include/SaveData.hpp"
 
 // ── User-configurable parameters ─────────────────────────────────────────────
-static const double TRAP_FREQ_HZ    = 150.0;   // trap frequency [Hz]
+static const double TRAP_FREQ_HZ    = 100.0;   // trap frequency [Hz]
 static const double MASS_AMU        = 87.0;    // atomic mass [amu]
 static const double LASER_NM        = 790.0;   // Raman laser wavelength [nm]
 static const double OMEGA_R_EREC    = 8.0;     // Rabi coupling [E_rec]
 static const double GRAD_KHZ_PER_UM = -0.4;     // detuning gradient [kHz/μm]
-static const double RAMP_TOTAL_MS   = 50;    // total ramp duration [ms]
-static const double RAMP_WIDTH_MS   = 30;    // tanh ramp width [ms]
-static const double RAMP_SHIFT_MS   = 0.12;    // hold before ramp starts [ms]
+static const double RAMP_TOTAL_MS   = 80;    // total ramp duration [ms]
+static const double RAMP_WIDTH_MS   = 60;    // tanh ramp width [ms]
+static const double RAMP_SHIFT_MS   = 5;    // hold before ramp starts [ms]
 static const double BOX_UM          = 26.4;    // simulation box size [μm]
 static const double DT_US           = 1.0;     // time step [μs]
 static const double RUN_TIME_MS     = 400.0;   // real-time evolution duration [ms]
 static const double SAVE_INTERVAL_MS = 0.5;    // wavefunction save interval [ms]
-static const double BETA            = 2616.0;  // interaction strength
+static const double N_ATOMS         = 1e5;     // number of atoms
+static const double A_SCATT_BOHR    = 100.4;   // s-wave scattering length [a_0] (Rb-87 ≈ 100.4)
+static const double OMEGA_Z_HZ      = 100.0;   // axial trap frequency [Hz] (sets ℓ_z)
 static const double GAMMA_X         = 1.0;     // trap anisotropy x
 static const double GAMMA_Y         = 1.0;     // trap anisotropy y
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,7 +82,13 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	this->num_i_steps = 1000000;
 	this->gamma_x = GAMMA_X;
 	this->gamma_y = GAMMA_Y;
-	this->beta    = BETA;
+	const double a_bohr = 5.2918e-11;                         // Bohr radius [m]
+	const double a_s    = A_SCATT_BOHR * a_bohr;              // scattering length [m]
+	const double omega_z = 2.0 * M_PI * OMEGA_Z_HZ;
+	const double ell_z  = sqrt(hbar / (mass * omega_z));      // axial osc. length [m]
+	this->beta = sqrt(8.0 * M_PI) * N_ATOMS * a_s / ell_z;   // β = √(8π)·N·a/ℓ_z
+	printf("Interaction: N=%.0f, a=%.1f a0, ell_z=%.3f um, beta=%.1f\n",
+	       N_ATOMS, A_SCATT_BOHR, ell_z*1e6, this->beta);
 	this->count = 0;
 	//Gauge potential parameters (specify in physical units, converted to dimensionless trap units)
 	double k_L              = 2.0 * M_PI / (LASER_NM * 1e-9);  // laser wavevector [m⁻¹]
@@ -114,7 +122,10 @@ SimulationData::SimulationData(int num_x, int num_y) {
 	}
 	this->dx = this->x[2]-this->x[1];
 	this->dy = this->y[2]-this->y[1];
-	this->dt = DT_US * 1e-6 * omega_trap;
+	this->dt      = DT_US * 1e-6 * omega_trap;
+	this->ell_um  = lx * 1e6;
+	this->dt_us   = DT_US;
+	this->trap_hz = TRAP_FREQ_HZ;
 	//Perform FFT shift on momentum arrays to compensate for negative frequencies shifting
 	double temp;
 	int n[2];
