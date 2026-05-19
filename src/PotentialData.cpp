@@ -63,7 +63,7 @@ PotentialData::PotentialData(SimulationData &sim_data) {
 			
 			this->harmonic_trap[index] = harmonic_val;
 			this->kinetic_energy[index] = kin_energy_val;
-			this->kinetic_energy_y[index] = 0.5 * pow(sim_data.py[i], 2.0);
+			this->kinetic_energy_y[index] = 0.5 * pow(sim_data.py[j], 2.0);
 
 		}
 	} 
@@ -127,8 +127,13 @@ void PotentialData::assign_momentum_operator(SimulationData &sim_data, WaveFunct
 			theta = (kinetic_energy[i]) * sim_data.dt;
 			this->mom_operator[i].real = exp(-1.0 * theta);
 			this->mom_operator[i].imag = 0;
-		}
 
+			// Dressed dispersion operators for imaginary-time ground state
+			this->mom_operator_x[i].real = exp(-1.0 * kinetic_energy_x[i] * sim_data.dt);
+			this->mom_operator_x[i].imag = 0;
+			this->mom_operator_y[i].real = exp(-1.0 * kinetic_energy_y[i] * sim_data.dt);
+			this->mom_operator_y[i].imag = 0;
+		}
 	}
 }
 

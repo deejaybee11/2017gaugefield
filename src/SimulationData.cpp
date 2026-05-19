@@ -39,7 +39,7 @@
 static const double TRAP_FREQ_HZ    = 70.0;   // trap frequency [Hz]
 static const double MASS_AMU        = 87.0;    // atomic mass [amu]
 static const double LASER_NM        = 790.0;   // Raman laser wavelength [nm]
-static const double OMEGA_R_EREC    = 8.0;     // Rabi coupling [E_rec]
+static const double OMEGA_R_EREC    = 8.2;     // Rabi coupling [E_rec]
 static const double GRAD_KHZ_PER_UM = -0.6;     // detuning gradient [kHz/μm]
 static const double RAMP_TOTAL_MS   = 80;    // total ramp duration [ms]
 static const double RAMP_WIDTH_MS   = 60;    // tanh ramp width [ms]

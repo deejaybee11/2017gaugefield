@@ -83,12 +83,15 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 	//detuning vector
 	
 
+	// Outer loop over x-momentum index j, inner over y-spatial index i.
+	// This gives index = j*Ny + i, matching the (px, y) layout that the x-FFT
+	// produces: after x-FFT, psi[ipx*Ny + iy] holds momentum px[ipx] at y[iy].
 	int index;
 	#pragma omp parallel for private(index, min, H1, H2, H3, eigenvalues)
-	for (int i = 0; i < sim_data.get_num_y(); ++i) {
-		for (int j = 0; j < sim_data.get_num_x(); ++j) {
+	for (int j = 0; j < sim_data.get_num_x(); ++j) {
+		for (int i = 0; i < sim_data.get_num_y(); ++i) {
 
-			index = i*sim_data.get_num_y() + j;
+			index = j * sim_data.get_num_y() + i;
 
 			H1 = 0.5 * pow(sim_data.px[j] - 2 * sim_data.recoil_k, 2.0) + delta[i];
 			H2 = 0.5 * pow(sim_data.px[j], 2.0);
@@ -104,17 +107,9 @@ int diagonalize_hamiltonian(SimulationData &sim_data, WaveFunction &psi, Potenti
 			else {
 				min = std::min(eigenvalues[1].real, eigenvalues[2].real);
 			}
-			
-//			std::cout << "eval =  [" << eigenvalues[0].real << ", " << eigenvalues[1].real << ", " << eigenvalues[2].real << "]" << std::endl;
-			p_minus_a[index] = min;
-			
-		}
-		if (i == -10) {
-			save_binary(p_minus_a, "1array.txt", sim_data.get_num_x());
-			std::cout << H1 << " " << H2 << " " << H3 << std::endl;
-			std::cout << min << std::endl;
-		}
 
+			p_minus_a[index] = min;
+		}
 	}
 	
 	for (int i = 0; i < sim_data.get_total_pts(); ++i) {
